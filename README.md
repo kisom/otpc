@@ -9,11 +9,11 @@ HOTP / 6238 TOTP two-factor; support is planned for Yubikey HOTP
 
 * Google TOTP (limited to six-character SHA-1 passwords with 30-second
 periods)
+* RFC 4226 HOTP (SHA-1 6 or 8 character passwords)
 * RFC 6238 TOTP (SHA-1 only)
 
 ### Planned OTP support:
 
-* RFC 4226 HOTP (SHA-1 6 or 8 character passwords)
 * RFC 6238 TOTP (256/384/512 6 or 8 character passwords with
   user-definable timesteps)
 
@@ -25,6 +25,20 @@ periods)
   step).
 * call ./otpc -list to return a list of all accounts stored in the
   account store.
+
+## Supported types
+
+* google: SHA-1 6-character TOTP with 30-second period
+* hotp
+* totp
+
+## Import / export
+
+The account store can be imported from PEM or exported to PEM. Pass
+either "-export" or "-import", and provide the source (when importing)
+or destination (when exporting) file as the only argument. If "-" is used
+as a filename, otpc will use either standard input or standard output,
+as appropriate.
 
 ## The account store:
 
