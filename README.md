@@ -25,6 +25,7 @@ periods)
   step).
 * call ./otpc -list to return a list of all accounts stored in the
   account store.
+* call ./otpc -remove label to remove the label from the account store.
 
 ## Supported types
 

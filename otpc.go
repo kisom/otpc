@@ -106,6 +106,8 @@ func addAccount(label string, otpType int) {
 		if err != nil {
 			errorf("%v", err)
 			os.Exit(1)
+		} else if in == "" {
+			in = "6"
 		}
 
 		digits, err := strconv.Atoi(in)
@@ -143,6 +145,8 @@ func addAccount(label string, otpType int) {
 		if err != nil {
 			errorf("%v", err)
 			os.Exit(1)
+		} else if in == "" {
+			in = "6"
 		}
 
 		digits, err := strconv.Atoi(in)
@@ -327,6 +331,7 @@ func main() {
 		addNewAccount(*fileName, label, t)
 	} else if *removeLabel {
 		openFile(*fileName)
+		fmt.Printf("Removing %s with URL: %s\n", label, accounts[label])
 		delete(accounts, label)
 		saveFile(*fileName)
 	} else {
