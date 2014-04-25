@@ -82,7 +82,7 @@ func addAccount(label string, otpType int) {
 		errorf("Failed to read password.")
 		os.Exit(1)
 	}
-	secret = strings.Replace(strings.ToUpper(secret), " ", "", -1)
+	secret = sanitiseSecret(secret)
 
 	switch otpType {
 	case HOTP:
@@ -134,6 +134,18 @@ func printTOTP(label string, otp twofactor.OTP) {
 		fmt.Println(otp.OTP())
 		<-time.After(30 * time.Second)
 	}
+}
+
+func sanitiseSecret(in string) string {
+	in = strings.ToUpper(in)
+	in = strings.Replace(in, " ", "", -1)
+	if len(in)%8 != 0 {
+		padding := 8 - (len(in) % 8)
+		for i := 0; i < padding; i++ {
+			in += "="
+		}
+	}
+	return in
 }
 
 func main() {
@@ -243,7 +255,11 @@ func importDatabase(filename, inFile string) {
 	if p == nil {
 		errorf("No PEM data found.")
 		os.Exit(1)
+	} else if p.Type != "OTPC ACCOUNT STORE" {
+		errorf("Invalid PEM type.")
+		os.Exit(1)
 	}
+
 	err = ioutil.WriteFile(filename, p.Bytes, 0600)
 	if err != nil {
 		errorf("%v", err)
