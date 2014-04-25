@@ -3,8 +3,7 @@
 I hate having my phone on my person, so wrote a command line client
 for [HT]OTP-based two-factor auth. This only works with RFC 4226
 HOTP / 6238 TOTP two-factor; support is planned for Yubikey HOTP
-(and possibly the Yubikey OTP). If you're using Authy, you done
-fucked up and are shit out of luck.
+(and possibly the Yubikey OTP). If you're using Authy, you're on your own.
 
 ### Supported OTP:
 
