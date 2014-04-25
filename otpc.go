@@ -185,6 +185,65 @@ func sanitiseSecret(in string) string {
 	return in
 }
 
+func exportDatabase(filename, outFile string) {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		errorf("%v", err)
+		os.Exit(1)
+	}
+
+	p := &pem.Block{
+		Type:  "OTPC ACCOUNT STORE",
+		Bytes: data,
+	}
+
+	var out io.Writer
+	if outFile == "-" {
+		out = os.Stdout
+	} else {
+		out, err = os.Create(outFile)
+		if err != nil {
+			errorf("%v", err)
+			os.Exit(1)
+		}
+	}
+	fmt.Fprintf(out, "%s\n", string(pem.EncodeToMemory(p)))
+}
+
+func importDatabase(filename, inFile string) {
+	var dataFile io.Reader
+	var err error
+	if inFile == "-" {
+		dataFile = os.Stdin
+	} else {
+		dataFile, err = os.Open(inFile)
+		if err != nil {
+			errorf("%v", err)
+			os.Exit(1)
+		}
+	}
+
+	pemData, err := ioutil.ReadAll(dataFile)
+	if err != nil {
+		errorf("%v", err)
+		os.Exit(1)
+	}
+	p, _ := pem.Decode(pemData)
+	if p == nil {
+		errorf("No PEM data found.")
+		os.Exit(1)
+	} else if p.Type != "OTPC ACCOUNT STORE" {
+		errorf("Invalid PEM type.")
+		os.Exit(1)
+	}
+
+	err = ioutil.WriteFile(filename, p.Bytes, 0600)
+	if err != nil {
+		errorf("%v", err)
+		os.Exit(1)
+	}
+}
+
 func main() {
 	baseFile := filepath.Join(os.Getenv("HOME"), ".otpc.db")
 	fileName := flag.String("f", baseFile, "path to account store")
@@ -244,64 +303,5 @@ func main() {
 			errorf("unknown OTP type")
 			os.Exit(1)
 		}
-	}
-}
-
-func exportDatabase(filename, outFile string) {
-	data, err := ioutil.ReadFile(filename)
-	if err != nil {
-		errorf("%v", err)
-		os.Exit(1)
-	}
-
-	p := &pem.Block{
-		Type:  "OTPC ACCOUNT STORE",
-		Bytes: data,
-	}
-
-	var out io.Writer
-	if outFile == "-" {
-		out = os.Stdout
-	} else {
-		out, err = os.Create(outFile)
-		if err != nil {
-			errorf("%v", err)
-			os.Exit(1)
-		}
-	}
-	fmt.Fprintf(out, "%s\n", string(pem.EncodeToMemory(p)))
-}
-
-func importDatabase(filename, inFile string) {
-	var dataFile io.Reader
-	var err error
-	if inFile == "-" {
-		dataFile = os.Stdin
-	} else {
-		dataFile, err = os.Open(inFile)
-		if err != nil {
-			errorf("%v", err)
-			os.Exit(1)
-		}
-	}
-
-	pemData, err := ioutil.ReadAll(dataFile)
-	if err != nil {
-		errorf("%v", err)
-		os.Exit(1)
-	}
-	p, _ := pem.Decode(pemData)
-	if p == nil {
-		errorf("No PEM data found.")
-		os.Exit(1)
-	} else if p.Type != "OTPC ACCOUNT STORE" {
-		errorf("Invalid PEM type.")
-		os.Exit(1)
-	}
-
-	err = ioutil.WriteFile(filename, p.Bytes, 0600)
-	if err != nil {
-		errorf("%v", err)
-		os.Exit(1)
 	}
 }
