@@ -2,6 +2,7 @@
 package main
 
 import (
+	"encoding/base32"
 	"encoding/json"
 	"encoding/pem"
 	"flag"
@@ -12,6 +13,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -89,8 +91,43 @@ func addAccount(label string, otpType int) {
 		errorf("Unsupported")
 		os.Exit(1)
 	case TOTP:
-		errorf("Unsupported")
-		os.Exit(1)
+		in, err := readpass.DefaultPasswordPrompt("Time step (30s): ")
+		if err != nil {
+			errorf("%v", err)
+			os.Exit(1)
+		}
+		if in == "" {
+			in = "30s"
+		}
+		d, err := time.ParseDuration(in)
+		if err != nil {
+			errorf("%v", err)
+			os.Exit(1)
+		}
+
+		in, err = readpass.DefaultPasswordPrompt("Digits (6 or 8): ")
+		if err != nil {
+			errorf("%v", err)
+			os.Exit(1)
+		}
+
+		digits, err := strconv.Atoi(in)
+		if err != nil {
+			errorf("%v", err)
+			os.Exit(1)
+		}
+
+		key, err := base32.StdEncoding.DecodeString(secret)
+		if err != nil {
+			errorf("%v", err)
+			os.Exit(1)
+		}
+
+		var totp *twofactor.TOTP
+		totp = twofactor.NewTOTPSHA1(key, 0, uint64(d.Seconds()), digits)
+		fmt.Printf("Confirmation: %s\n", totp.OTP())
+		secret = totp.URL(label)
+
 	case GoogleTOTP:
 		var totp *twofactor.TOTP
 		totp, err = twofactor.NewGoogleTOTP(secret)
@@ -186,6 +223,8 @@ func main() {
 		switch *otpType {
 		case "google":
 			t = GoogleTOTP
+		case "totp":
+			t = TOTP
 		default:
 			errorf("Unsupported OTP type: %s", *otpType)
 			os.Exit(1)
