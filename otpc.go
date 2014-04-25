@@ -88,8 +88,42 @@ func addAccount(label string, otpType int) {
 
 	switch otpType {
 	case HOTP:
-		errorf("Unsupported")
-		os.Exit(1)
+		in, err := readpass.DefaultPasswordPrompt("Initial counter (0): ")
+		if err != nil {
+			errorf("%v", err)
+			os.Exit(1)
+		}
+		if in == "" {
+			in = "0"
+		}
+		d, err := strconv.Atoi(in)
+		if err != nil {
+			errorf("%v", err)
+			os.Exit(1)
+		}
+
+		in, err = readpass.DefaultPasswordPrompt("Digits (6 or 8): ")
+		if err != nil {
+			errorf("%v", err)
+			os.Exit(1)
+		}
+
+		digits, err := strconv.Atoi(in)
+		if err != nil {
+			errorf("%v", err)
+			os.Exit(1)
+		}
+
+		key, err := base32.StdEncoding.DecodeString(secret)
+		if err != nil {
+			errorf("%v", err)
+			os.Exit(1)
+		}
+
+		var hotp *twofactor.HOTP
+		hotp = twofactor.NewHOTP(key, uint64(d), digits)
+		fmt.Printf("Confirmation: %s\n", hotp.OTP())
+		secret = hotp.URL(label)
 	case TOTP:
 		in, err := readpass.DefaultPasswordPrompt("Time step (30s): ")
 		if err != nil {
@@ -127,7 +161,6 @@ func addAccount(label string, otpType int) {
 		totp = twofactor.NewTOTPSHA1(key, 0, uint64(d.Seconds()), digits)
 		fmt.Printf("Confirmation: %s\n", totp.OTP())
 		secret = totp.URL(label)
-
 	case GoogleTOTP:
 		var totp *twofactor.TOTP
 		totp, err = twofactor.NewGoogleTOTP(secret)
@@ -282,6 +315,8 @@ func main() {
 		switch *otpType {
 		case "google":
 			t = GoogleTOTP
+		case "hotp":
+			t = HOTP
 		case "totp":
 			t = TOTP
 		default:
