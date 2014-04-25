@@ -285,6 +285,7 @@ func main() {
 	doExport := flag.Bool("export", false, "export database in PEM format to stdout")
 	doImport := flag.Bool("import", false, "import database from PEM format")
 	showList := flag.Bool("list", false, "list accounts in database")
+	removeLabel := flag.Bool("remove", false, "remove account")
 	flag.Parse()
 
 	if *doExport || *doImport {
@@ -324,6 +325,10 @@ func main() {
 			os.Exit(1)
 		}
 		addNewAccount(*fileName, label, t)
+	} else if *removeLabel {
+		openFile(*fileName)
+		delete(accounts, label)
+		saveFile(*fileName)
 	} else {
 		openFile(*fileName)
 		otp, label, err := twofactor.FromURL(accounts[label])
