@@ -19,7 +19,12 @@ user-definable timesteps)
 
 ## Using this:
 * extract the secret from the QR code (i.e. with a mobile app)
-* call ./otpc -new -type google label (where label is the name to give the account)
+* call ./otpc -new -type google label (where label is the name to give
+  the account) to add a new token
+* call ./otpc label (where label is the label you gave in the previous
+  step).
+* call ./otpc -list to return a list of all accounts stored in the
+  account store.
 
 ## The account store:
 

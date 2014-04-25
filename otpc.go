@@ -57,6 +57,14 @@ func saveFile(filename string) {
 	}
 }
 
+func listLabels(filename string) {
+	openFile(filename)
+	fmt.Println("Accounts:")
+	for label := range accounts {
+		fmt.Printf("\t%s\n", label)
+	}
+}
+
 const (
 	HOTP = iota + 1
 	TOTP
@@ -134,14 +142,23 @@ func main() {
 	otpType := flag.String("type", "google", "type of OTP")
 	addNew := flag.Bool("new", false, "add a new account")
 	doExport := flag.Bool("export", false, "export database in PEM format to stdout")
+	doImport := flag.Bool("import", false, "import database from PEM format")
+	showList := flag.Bool("list", false, "list accounts in database")
 	flag.Parse()
 
-	if *doExport {
+	if *doExport || *doImport {
 		if flag.NArg() != 1 {
-			errorf("Need one output file specified as an argument.")
+			errorf("Need the PEM file specified as an argument.")
 			os.Exit(1)
 		}
-		exportDatabase(*fileName, flag.Arg(0))
+		if *doExport {
+			exportDatabase(*fileName, flag.Arg(0))
+		} else {
+			importDatabase(*fileName, flag.Arg(0))
+		}
+		os.Exit(0)
+	} else if *showList {
+		listLabels(*fileName)
 		os.Exit(0)
 	}
 
@@ -202,4 +219,34 @@ func exportDatabase(filename, outFile string) {
 		}
 	}
 	fmt.Fprintf(out, "%s\n", string(pem.EncodeToMemory(p)))
+}
+
+func importDatabase(filename, inFile string) {
+	var dataFile io.Reader
+	var err error
+	if inFile == "-" {
+		dataFile = os.Stdin
+	} else {
+		dataFile, err = os.Open(inFile)
+		if err != nil {
+			errorf("%v", err)
+			os.Exit(1)
+		}
+	}
+
+	pemData, err := ioutil.ReadAll(dataFile)
+	if err != nil {
+		errorf("%v", err)
+		os.Exit(1)
+	}
+	p, _ := pem.Decode(pemData)
+	if p == nil {
+		errorf("No PEM data found.")
+		os.Exit(1)
+	}
+	err = ioutil.WriteFile(filename, p.Bytes, 0600)
+	if err != nil {
+		errorf("%v", err)
+		os.Exit(1)
+	}
 }
