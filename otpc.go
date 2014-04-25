@@ -3,10 +3,13 @@ package main
 
 import (
 	"encoding/json"
+	"encoding/pem"
 	"flag"
 	"fmt"
 	"github.com/gokyle/readpass"
 	"github.com/gokyle/twofactor"
+	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -71,7 +74,7 @@ func addAccount(label string, otpType int) {
 		errorf("Failed to read password.")
 		os.Exit(1)
 	}
-	secret = strings.ToUpper(secret)
+	secret = strings.Replace(strings.ToUpper(secret), " ", "", -1)
 
 	switch otpType {
 	case HOTP:
@@ -130,7 +133,17 @@ func main() {
 	fileName := flag.String("f", baseFile, "path to account store")
 	otpType := flag.String("type", "google", "type of OTP")
 	addNew := flag.Bool("new", false, "add a new account")
+	doExport := flag.Bool("export", false, "export database in PEM format to stdout")
 	flag.Parse()
+
+	if *doExport {
+		if flag.NArg() != 1 {
+			errorf("Need one output file specified as an argument.")
+			os.Exit(1)
+		}
+		exportDatabase(*fileName, flag.Arg(0))
+		os.Exit(0)
+	}
 
 	if flag.NArg() == 0 {
 		errorf("No label provided.")
@@ -164,4 +177,29 @@ func main() {
 			os.Exit(1)
 		}
 	}
+}
+
+func exportDatabase(filename, outFile string) {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		errorf("%v", err)
+		os.Exit(1)
+	}
+
+	p := &pem.Block{
+		Type:  "OTPC ACCOUNT STORE",
+		Bytes: data,
+	}
+
+	var out io.Writer
+	if outFile == "-" {
+		out = os.Stdout
+	} else {
+		out, err = os.Create(outFile)
+		if err != nil {
+			errorf("%v", err)
+			os.Exit(1)
+		}
+	}
+	fmt.Fprintf(out, "%s\n", string(pem.EncodeToMemory(p)))
 }
