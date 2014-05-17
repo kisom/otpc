@@ -7,8 +7,6 @@ import (
 	"encoding/pem"
 	"flag"
 	"fmt"
-	"github.com/gokyle/readpass"
-	"github.com/gokyle/twofactor"
 	"io"
 	"io/ioutil"
 	"os"
@@ -16,6 +14,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gokyle/readpass"
+	"github.com/gokyle/twofactor"
 )
 
 func errorf(m string, args ...interface{}) {
@@ -281,9 +282,26 @@ func importDatabase(filename, inFile string) {
 	}
 }
 
+func changePassword(fileName string) {
+	blob, err := decryptFile(fileName)
+	if err != nil {
+		errorf("%v", err)
+		os.Exit(1)
+	}
+	defer zero(blob)
+	zero(passphrase)
+	passphrase = nil
+	err = encryptFile(fileName, blob)
+	if err != nil {
+		errorf("%v", err)
+		os.Exit(1)
+	}
+}
+
 func main() {
 	baseFile := filepath.Join(os.Getenv("HOME"), ".otpc.db")
 	fileName := flag.String("f", baseFile, "path to account store")
+	chPass := flag.Bool("chpass", false, "change password")
 	otpType := flag.String("type", "google", "type of OTP")
 	addNew := flag.Bool("new", false, "add a new account")
 	doExport := flag.Bool("export", false, "export database in PEM format to stdout")
@@ -305,6 +323,9 @@ func main() {
 		os.Exit(0)
 	} else if *showList {
 		listLabels(*fileName)
+		os.Exit(0)
+	} else if *chPass {
+		changePassword(*fileName)
 		os.Exit(0)
 	}
 

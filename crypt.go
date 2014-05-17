@@ -1,15 +1,14 @@
-// secretbox is a wrapper around the NaCl secretbox package. It generates a
-// random nonce for each message and prepends this to the ciphertext.
 package main
 
 import (
-	"code.google.com/p/go.crypto/nacl/secretbox"
-	"code.google.com/p/go.crypto/scrypt"
 	"crypto/rand"
 	"errors"
-	"github.com/gokyle/readpass"
 	"io"
 	"io/ioutil"
+
+	"code.google.com/p/go.crypto/nacl/secretbox"
+	"code.google.com/p/go.crypto/scrypt"
+	"github.com/gokyle/readpass"
 )
 
 func randBytes(size int) []byte {
@@ -88,7 +87,7 @@ func decryptFile(filename string) (data []byte, err error) {
 
 	salt := data[:saltSize]
 	data = data[saltSize:]
-	passphrase, err = readpass.PasswordPromptBytes("Passphrase: ")
+	passphrase, err = readpass.PasswordPromptBytes("Database passphrase: ")
 	if err != nil {
 		data = nil
 		return
@@ -116,7 +115,7 @@ func encryptFile(filename string, encoded []byte) (err error) {
 	defer zero(encoded)
 
 	if passphrase == nil {
-		passphrase, err = readpass.PasswordPromptBytes("Passphrase: ")
+		passphrase, err = readpass.PasswordPromptBytes("Database passphrase: ")
 		if err != nil {
 			return
 		}
