@@ -1,5 +1,8 @@
 # otpc: an OTP command line client
 
+**UPDATE**: this has been superceded by the tools in
+[cryptutils](https://github.com/kisom/cryptutils).
+
 I hate having my phone on my person, so wrote a command line client
 for [HT]OTP-based two-factor auth. This only works with RFC 4226
 HOTP / 6238 TOTP two-factor; support is planned for Yubikey HOTP
